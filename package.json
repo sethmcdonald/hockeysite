@@ -7,8 +7,12 @@
     "build": "pnpm --filter web build",
     "lint": "pnpm --filter web lint",
     "typecheck": "pnpm --filter web typecheck",
+    "db:start": "docker compose up -d postgres",
+    "db:stop": "docker compose down",
     "db:generate": "pnpm --filter @hockey/db db:generate",
-    "db:migrate": "pnpm --filter @hockey/db db:migrate"
+    "db:push": "pnpm --filter @hockey/db db:push",
+    "db:migrate": "pnpm --filter @hockey/db db:migrate",
+    "db:studio": "pnpm --filter @hockey/db db:studio"
   }
 }
 

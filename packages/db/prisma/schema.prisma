@@ -7,43 +7,123 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Position {
+  C
+  LW
+  RW
+  D
+  G
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXTENSION
+  EXPIRED
+  BOUGHT_OUT
+  TERMINATED
+}
+
+enum TransactionType {
+  TRADE
+  SIGNING
+  EXTENSION
+  WAIVER
+  BUYOUT
+  RECALL
+  ASSIGNMENT
+}
+
 model Player {
-  id        String   @id @default(cuid())
-  fullName  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String           @id @default(cuid())
+  fullName         String
+  slug             String           @unique
+  position         Position?
+  shoots           String?
+  birthDate        DateTime?
+  currentTeamId    String?
+  currentTeam      Team?            @relation("CurrentRoster", fields: [currentTeamId], references: [id])
+  contracts        Contract[]
+  sentTransactions Transaction[] @relation("TransactionPlayer")
+  anchorScenarios  AnchorScenario[] @relation("AnchorPlayer")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 }
 
 model Team {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                   String           @id @default(cuid())
+  name                 String
+  slug                 String           @unique
+  abbreviation         String           @unique
+  league               String?
+  currentRoster        Player[]         @relation("CurrentRoster")
+  contracts            Contract[]
+  outgoingTransactions Transaction[] @relation("FromTeam")
+  incomingTransactions Transaction[] @relation("ToTeam")
+  anchorScenarios      AnchorScenario[] @relation("AnchorTeam")
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
 }
 
 model Contract {
-  id                String   @id @default(cuid())
-  playerName        String
+  id                String          @id @default(cuid())
+  playerId          String
+  teamId            String
+  player            Player          @relation(fields: [playerId], references: [id])
+  team              Team            @relation(fields: [teamId], references: [id])
+  status            ContractStatus  @default(ACTIVE)
+  startSeason       Int
+  endSeason         Int
+  signedDate        DateTime?
+  totalValueUsd     Int?
   capHitUsd         Int?
   capPercentage     Float?
   normalizedSeason  String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  isHistorical      Boolean         @default(false)
+  sourceLabel       String?
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([playerId])
+  @@index([teamId])
+  @@index([startSeason, endSeason])
 }
 
 model Transaction {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String           @id @default(cuid())
+  type           TransactionType
+  title          String
+  description    String?
+  playerId       String?
+  fromTeamId     String?
+  toTeamId       String?
+  effectiveDate  DateTime?
+  player         Player?          @relation("TransactionPlayer", fields: [playerId], references: [id])
+  fromTeam       Team?            @relation("FromTeam", fields: [fromTeamId], references: [id])
+  toTeam         Team?            @relation("ToTeam", fields: [toTeamId], references: [id])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([playerId])
+  @@index([fromTeamId])
+  @@index([toTeamId])
 }
 
 model AnchorScenario {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  description      String?
+  anchorTeamId     String?
+  anchorPlayerId   String?
+  baselineSeason   Int?
+  assumptionsJson  Json?
+  anchorTeam       Team?    @relation("AnchorTeam", fields: [anchorTeamId], references: [id])
+  anchorPlayer     Player?  @relation("AnchorPlayer", fields: [anchorPlayerId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([anchorTeamId])
+  @@index([anchorPlayerId])
 }
 

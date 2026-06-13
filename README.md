@@ -8,6 +8,7 @@ Initial monorepo scaffold for a hockey decision intelligence platform.
 - `packages/db`: Prisma package configured for PostgreSQL.
 - `docs/product/canon.md`: core product language and canon definitions.
 - `AGENTS.md`: working instructions for future contributors and coding agents.
+- `docker-compose.yml`: local PostgreSQL service for development.
 
 ## Setup
 
@@ -30,13 +31,25 @@ PowerShell:
 Copy-Item .env.example .env
 ```
 
-3. Generate the Prisma client:
+3. Start the local PostgreSQL container:
+
+```bash
+pnpm db:start
+```
+
+4. Generate the Prisma client:
 
 ```bash
 pnpm db:generate
 ```
 
-4. Start the web app:
+5. Push the schema to your local database:
+
+```bash
+pnpm db:push
+```
+
+6. Start the web app:
 
 ```bash
 pnpm dev
@@ -48,11 +61,21 @@ pnpm dev
 pnpm build
 pnpm lint
 pnpm typecheck
+pnpm db:start
+pnpm db:stop
+pnpm db:push
 pnpm db:migrate
+pnpm db:studio
 ```
+
+## Database notes
+
+- The Prisma schema now models the initial hockey core: teams, players, contracts, transactions, and anchor scenarios.
+- The current schema is intentionally local-first and does not assume any paid or unofficial source integration.
+- `Contract.capPercentage` and `Contract.normalizedSeason` are included so cap percentage normalization can become a first-class workflow later.
 
 ## Test notes
 
-- This scaffold has placeholder pages only; no authentication or external data integrations are wired yet.
-- In this workspace, dependencies were not installed, so `build`, `lint`, `typecheck`, and Prisma generation were not executed locally.
-- After `pnpm install`, the main smoke-check path is `pnpm lint`, `pnpm typecheck`, and `pnpm build`.
+- This scaffold still has placeholder pages only; no authentication or external data integrations are wired yet.
+- Local verification now covers Prisma generation, web lint, typecheck, and production build.
+- `pnpm db:start` and `pnpm db:push` are the intended first local database boot path.
