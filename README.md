@@ -49,7 +49,13 @@ pnpm db:generate
 pnpm db:push
 ```
 
-6. Start the web app:
+6. Seed the sample hockey dataset:
+
+```bash
+pnpm db:seed
+```
+
+7. Start the web app:
 
 ```bash
 pnpm dev
@@ -64,6 +70,7 @@ pnpm typecheck
 pnpm db:start
 pnpm db:stop
 pnpm db:push
+pnpm db:seed
 pnpm db:migrate
 pnpm db:studio
 ```
@@ -73,6 +80,7 @@ pnpm db:studio
 - The Prisma schema now models the initial hockey core: teams, players, contracts, transactions, and anchor scenarios.
 - The current schema is intentionally local-first and does not assume any paid or unofficial source integration.
 - `Contract.capPercentage` and `Contract.normalizedSeason` are included so cap percentage normalization can become a first-class workflow later.
+- `pnpm db:seed` loads a tiny local contracts dataset so `/contracts` has real rows to render immediately.
 
 ## Test notes
 
