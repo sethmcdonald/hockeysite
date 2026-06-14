@@ -1,5 +1,6 @@
 import { prisma } from "@hockey/db";
 import Link from "next/link";
+import { PageContext } from "../components/page-context";
 
 export const dynamic = "force-dynamic";
 
@@ -243,8 +244,8 @@ function PlayerGrid({ players }: { players: PlayerRow[] }) {
 
             <p>
               {player.currentTeam
-                ? `${player.currentTeam.name} · ${player.position ?? "Position TBD"} · Shoots ${player.shoots ?? "TBD"}`
-                : `No team assigned · ${player.position ?? "Position TBD"} · Shoots ${player.shoots ?? "TBD"}`}
+                ? `${player.currentTeam.name} | ${player.position ?? "Position TBD"} | Shoots ${player.shoots ?? "TBD"}`
+                : `No team assigned | ${player.position ?? "Position TBD"} | Shoots ${player.shoots ?? "TBD"}`}
             </p>
 
             <div className="stats-grid">
@@ -319,6 +320,15 @@ export default async function PlayersPage({
             players, team and position filtering, and direct links back into
             contract and anchor context.
           </p>
+
+          <PageContext
+            goal="Give a quick player-level entry point into contract, roster, and anchor analysis."
+            questions={[
+              "Who is this player in the current roster landscape?",
+              "How much contract and anchor context do we already have for them?",
+              "Which players should we inspect more deeply for decision-making?"
+            ]}
+          />
 
           <PlayerFilters players={players} searchParams={searchParams ?? {}} />
         </section>

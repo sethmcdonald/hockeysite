@@ -1,5 +1,6 @@
 import { prisma } from "@hockey/db";
 import Link from "next/link";
+import { PageContext } from "../components/page-context";
 
 export const dynamic = "force-dynamic";
 
@@ -266,6 +267,15 @@ export default async function AnchorsAwayPage() {
             stays intentionally small, but it gives the product a real scenario
             surface instead of a placeholder.
           </p>
+
+          <PageContext
+            goal="Explore how contract conclusions change when a player or team anchor becomes the framing point for the market."
+            questions={[
+              "Which contracts are setting the tone for a market segment?",
+              "What happens if a high-end anchor is emphasized or removed?",
+              "Which scenarios should feed future ANCHOR risk work?"
+            ]}
+          />
         </section>
 
         <MarketPanel contracts={marketContracts} />

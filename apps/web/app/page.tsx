@@ -1,3 +1,5 @@
+import { PageContext } from "./components/page-context";
+
 export default function HomePage() {
   return (
     <main className="stack">
@@ -11,6 +13,15 @@ export default function HomePage() {
         </p>
         <span className="label">No auth, no paid feeds, no unofficial sources</span>
       </section>
+
+      <PageContext
+        goal="Orient the user around the platform's decision-intelligence purpose and show which major workflows already exist."
+        questions={[
+          "What decisions is this platform meant to support?",
+          "Which product surfaces are already live?",
+          "What is the difference between SAUCE and ANCHOR?"
+        ]}
+      />
 
       <section className="grid">
         <article className="panel">

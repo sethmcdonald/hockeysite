@@ -1,5 +1,6 @@
 import { prisma } from "@hockey/db";
 import Link from "next/link";
+import { PageContext } from "../components/page-context";
 
 export const dynamic = "force-dynamic";
 
@@ -218,8 +219,8 @@ function TeamGrid({ teams }: { teams: TeamRow[] }) {
             </div>
 
             <p>
-              {team.league ?? "League TBD"} · {team.currentRoster.length} seeded roster
-              player{team.currentRoster.length === 1 ? "" : "s"} ·{" "}
+              {team.league ?? "League TBD"} | {team.currentRoster.length} seeded roster
+              player{team.currentRoster.length === 1 ? "" : "s"} |{" "}
               {team.anchorScenarios.length} anchor scenario
               {team.anchorScenarios.length === 1 ? "" : "s"}
             </p>
@@ -249,7 +250,7 @@ function TeamGrid({ teams }: { teams: TeamRow[] }) {
               <div className="chip-row">
                 {team.currentRoster.map((player) => (
                   <span key={player.id} className="soft-label">
-                    {player.fullName} {player.position ? `· ${player.position}` : ""}
+                    {player.fullName} {player.position ? `| ${player.position}` : ""}
                   </span>
                 ))}
               </div>
@@ -310,6 +311,15 @@ export default async function TeamsPage({
             roster snapshots, contract concentration, and direct links back into
             player and anchor analysis.
           </p>
+
+          <PageContext
+            goal="Show how a team's roster, contracts, and anchor exposure come together in one roster-building view."
+            questions={[
+              "Which teams are concentrated around big cap commitments?",
+              "How much seeded roster and anchor context do we have for a club?",
+              "Which teams deserve deeper contract or scenario analysis next?"
+            ]}
+          />
 
           <TeamFilters searchParams={searchParams ?? {}} teams={teams} />
         </section>

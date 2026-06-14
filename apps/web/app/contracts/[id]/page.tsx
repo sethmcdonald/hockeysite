@@ -1,5 +1,6 @@
 import { prisma } from "@hockey/db";
 import Link from "next/link";
+import { PageContext } from "../../components/page-context";
 
 export const dynamic = "force-dynamic";
 
@@ -100,14 +101,23 @@ export default async function ContractDetailPage({
             <span className="eyebrow">Contract Detail</span>
             <h1>{contract.player.fullName}</h1>
             <p>
-              {contract.team.name} ({contract.team.abbreviation}) ·{" "}
-              {contract.player.position ?? "Position TBD"} · {contract.status}
+              {contract.team.name} ({contract.team.abbreviation}) |{" "}
+              {contract.player.position ?? "Position TBD"} | {contract.status}
             </p>
           </div>
           <Link className="button-secondary inline-button" href="/contracts">
             Back to contracts
           </Link>
         </div>
+
+        <PageContext
+          goal="Turn an individual contract into a decision-ready snapshot with player context, team context, and normalized cap framing in one place."
+          questions={[
+            "Why does this specific contract matter for roster construction?",
+            "How expensive is it relative to the cap environment?",
+            "What additional comparison or risk work should eventually be layered onto this deal?"
+          ]}
+        />
 
         <section className="stats-grid">
           <article className="stat-card">

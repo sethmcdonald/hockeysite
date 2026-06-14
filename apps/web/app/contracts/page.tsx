@@ -1,5 +1,6 @@
 import { prisma } from "@hockey/db";
 import Link from "next/link";
+import { PageContext } from "../components/page-context";
 
 export const dynamic = "force-dynamic";
 
@@ -327,6 +328,15 @@ function ContractsTable({
         to inspect historical contracts and cap percentage normalization before
         we add external ingestion.
       </p>
+
+      <PageContext
+        goal="Help evaluate whether a contract looks fair, expensive, or risky once cap context is normalized across eras."
+        questions={[
+          "How large is this contract relative to the cap environment?",
+          "Which deals stand out as market anchors or warning signs?",
+          "How does this player's contract compare to similar roster decisions?"
+        ]}
+      />
 
       <FilterControls
         searchParams={searchParams}
