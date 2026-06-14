@@ -87,3 +87,4 @@ pnpm db:studio
 - This scaffold still has placeholder pages only; no authentication or external data integrations are wired yet.
 - Local verification now covers Prisma generation, web lint, typecheck, and production build.
 - `pnpm db:start` and `pnpm db:push` are the intended first local database boot path.
+- The default connection string uses `127.0.0.1` instead of `localhost` to avoid Windows host resolution quirks with local Postgres containers.
