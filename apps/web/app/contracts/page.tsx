@@ -6,40 +6,48 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = {
   q?: string;
-  era?: string;
   sort?: string;
 };
 
 type ContractRow = {
   id: string;
+  sign_date: Date | null;
+  term_years: number;
+  total_value: unknown;
+  average_annual_value: unknown;
+  contract_type: string | null;
+  signing_status: string | null;
   player: {
-    fullName: string;
+    full_name: string;
     position: string | null;
   };
-  team: {
+  signing_team: {
     name: string;
     abbreviation: string;
   };
-  startSeason: number;
-  endSeason: number;
-  capHitUsd: number | null;
-  capPercentage: number | null;
-  normalizedSeason: string | null;
-  isHistorical: boolean;
-  sourceLabel: string | null;
+  start_season: {
+    season_code: string;
+    start_year: number;
+  };
+  end_season: {
+    season_code: string;
+  };
+  contract_years: {
+    id: string;
+  }[];
 };
 
 type ContractsSummary = {
-  averageCapPercentage: number | null;
-  currentContracts: number;
-  historicalContracts: number;
-  highestCapContract: ContractRow | null;
+  totalContracts: number;
+  totalContractYears: number;
+  averageAav: number | null;
+  largestContract: ContractRow | null;
 };
 
 const sortOptions = [
-  { value: "cap-desc", label: "Cap % (High to Low)" },
-  { value: "cap-asc", label: "Cap % (Low to High)" },
-  { value: "caphit-desc", label: "Cap Hit (High to Low)" },
+  { value: "aav-desc", label: "AAV (High to Low)" },
+  { value: "value-desc", label: "Total Value (High to Low)" },
+  { value: "term-desc", label: "Term (Long to Short)" },
   { value: "player-asc", label: "Player (A to Z)" },
   { value: "team-asc", label: "Team (A to Z)" },
   { value: "season-desc", label: "Newest Start Season" }
@@ -52,11 +60,7 @@ function buildContractsUrl(searchParams: SearchParams) {
     params.set("q", searchParams.q.trim());
   }
 
-  if (searchParams.era && searchParams.era !== "all") {
-    params.set("era", searchParams.era);
-  }
-
-  if (searchParams.sort && searchParams.sort !== "cap-desc") {
+  if (searchParams.sort && searchParams.sort !== "aav-desc") {
     params.set("sort", searchParams.sort);
   }
 
@@ -64,8 +68,18 @@ function buildContractsUrl(searchParams: SearchParams) {
   return query.length > 0 ? `/contracts?${query}` : "/contracts";
 }
 
-function formatMoney(value: number | null) {
-  if (value === null) {
+function toNumber(value: unknown) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  return Number(value);
+}
+
+function formatMoney(value: unknown) {
+  const numeric = toNumber(value);
+
+  if (numeric === null) {
     return "TBD";
   }
 
@@ -73,39 +87,46 @@ function formatMoney(value: number | null) {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0
-  }).format(value);
-}
-
-function formatPercent(value: number | null) {
-  if (value === null) {
-    return "TBD";
-  }
-
-  return `${value.toFixed(2)}%`;
+  }).format(numeric);
 }
 
 async function getContracts() {
   return prisma.contract.findMany({
-    orderBy: [{ capPercentage: "desc" }, { startSeason: "desc" }],
+    orderBy: [{ average_annual_value: "desc" }, { sign_date: "desc" }],
     select: {
       id: true,
-      startSeason: true,
-      endSeason: true,
-      capHitUsd: true,
-      capPercentage: true,
-      normalizedSeason: true,
-      isHistorical: true,
-      sourceLabel: true,
+      sign_date: true,
+      term_years: true,
+      total_value: true,
+      average_annual_value: true,
+      contract_type: true,
+      signing_status: true,
       player: {
         select: {
-          fullName: true,
+          full_name: true,
           position: true
         }
       },
-      team: {
+      signing_team: {
         select: {
           name: true,
           abbreviation: true
+        }
+      },
+      start_season: {
+        select: {
+          season_code: true,
+          start_year: true
+        }
+      },
+      end_season: {
+        select: {
+          season_code: true
+        }
+      },
+      contract_years: {
+        select: {
+          id: true
         }
       }
     }
@@ -117,45 +138,38 @@ function applyFilters(
   searchParams: SearchParams
 ): ContractRow[] {
   const query = searchParams.q?.trim().toLowerCase() ?? "";
-  const era = searchParams.era ?? "all";
-  const sort = searchParams.sort ?? "cap-desc";
+  const sort = searchParams.sort ?? "aav-desc";
 
-  let nextContracts = [...contracts];
+  const nextContracts = contracts.filter((contract) => {
+    if (query.length === 0) {
+      return true;
+    }
 
-  if (query.length > 0) {
-    nextContracts = nextContracts.filter((contract) => {
-      const playerMatch = contract.player.fullName.toLowerCase().includes(query);
-      const teamMatch =
-        contract.team.name.toLowerCase().includes(query) ||
-        contract.team.abbreviation.toLowerCase().includes(query);
-
-      return playerMatch || teamMatch;
-    });
-  }
-
-  if (era === "current") {
-    nextContracts = nextContracts.filter((contract) => !contract.isHistorical);
-  }
-
-  if (era === "historical") {
-    nextContracts = nextContracts.filter((contract) => contract.isHistorical);
-  }
+    return (
+      contract.player.full_name.toLowerCase().includes(query) ||
+      contract.signing_team.name.toLowerCase().includes(query) ||
+      contract.signing_team.abbreviation.toLowerCase().includes(query)
+    );
+  });
 
   nextContracts.sort((left, right) => {
     switch (sort) {
-      case "cap-asc":
-        return (left.capPercentage ?? -1) - (right.capPercentage ?? -1);
-      case "caphit-desc":
-        return (right.capHitUsd ?? -1) - (left.capHitUsd ?? -1);
+      case "value-desc":
+        return (toNumber(right.total_value) ?? -1) - (toNumber(left.total_value) ?? -1);
+      case "term-desc":
+        return right.term_years - left.term_years;
       case "player-asc":
-        return left.player.fullName.localeCompare(right.player.fullName);
+        return left.player.full_name.localeCompare(right.player.full_name);
       case "team-asc":
-        return left.team.name.localeCompare(right.team.name);
+        return left.signing_team.name.localeCompare(right.signing_team.name);
       case "season-desc":
-        return right.startSeason - left.startSeason;
-      case "cap-desc":
+        return right.start_season.start_year - left.start_season.start_year;
+      case "aav-desc":
       default:
-        return (right.capPercentage ?? -1) - (left.capPercentage ?? -1);
+        return (
+          (toNumber(right.average_annual_value) ?? -1) -
+          (toNumber(left.average_annual_value) ?? -1)
+        );
     }
   });
 
@@ -163,24 +177,26 @@ function applyFilters(
 }
 
 function getSummary(contracts: ContractRow[]): ContractsSummary {
-  const capPercentages = contracts
-    .map((contract) => contract.capPercentage)
+  const aavs = contracts
+    .map((contract) => toNumber(contract.average_annual_value))
     .filter((value): value is number => value !== null);
 
-  const highestCapContract =
-    contracts.find((contract) => contract.capPercentage !== null) ?? null;
+  const largestContract = [...contracts].sort(
+    (left, right) =>
+      (toNumber(right.total_value) ?? -1) - (toNumber(left.total_value) ?? -1)
+  )[0] ?? null;
 
   return {
-    averageCapPercentage:
-      capPercentages.length > 0
-        ? capPercentages.reduce((sum, value) => sum + value, 0) /
-          capPercentages.length
+    totalContracts: contracts.length,
+    totalContractYears: contracts.reduce(
+      (sum, contract) => sum + contract.contract_years.length,
+      0
+    ),
+    averageAav:
+      aavs.length > 0
+        ? aavs.reduce((sum, value) => sum + value, 0) / aavs.length
         : null,
-    currentContracts: contracts.filter((contract) => !contract.isHistorical)
-      .length,
-    historicalContracts: contracts.filter((contract) => contract.isHistorical)
-      .length,
-    highestCapContract
+    largestContract
   };
 }
 
@@ -190,30 +206,32 @@ function SummaryCards({ contracts }: { contracts: ContractRow[] }) {
   return (
     <section className="stats-grid">
       <article className="stat-card">
-        <span className="stat-label">Average Cap %</span>
-        <strong className="stat-value">
-          {formatPercent(summary.averageCapPercentage)}
-        </strong>
-        <p>Quick read on the current seeded market level.</p>
+        <span className="stat-label">Contracts</span>
+        <strong className="stat-value">{summary.totalContracts}</strong>
+        <p>Full agreement records in the current sample warehouse.</p>
       </article>
 
       <article className="stat-card">
-        <span className="stat-label">Current vs Historical</span>
-        <strong className="stat-value">
-          {summary.currentContracts} / {summary.historicalContracts}
-        </strong>
-        <p>Current contracts first, with historical context beside them.</p>
+        <span className="stat-label">Contract Years</span>
+        <strong className="stat-value">{summary.totalContractYears}</strong>
+        <p>Season-level salary rows attached to those contracts.</p>
       </article>
 
       <article className="stat-card">
-        <span className="stat-label">Top Anchor</span>
+        <span className="stat-label">Average AAV</span>
+        <strong className="stat-value">{formatMoney(summary.averageAav)}</strong>
+        <p>Warehouse-friendly baseline before cap normalization logic exists.</p>
+      </article>
+
+      <article className="stat-card">
+        <span className="stat-label">Largest Sample Contract</span>
         <strong className="stat-value">
-          {summary.highestCapContract?.player.fullName ?? "TBD"}
+          {summary.largestContract?.player.full_name ?? "TBD"}
         </strong>
         <p>
-          {summary.highestCapContract
-            ? `${formatPercent(summary.highestCapContract.capPercentage)} cap share for ${summary.highestCapContract.team.abbreviation}.`
-            : "No cap anchor available yet."}
+          {summary.largestContract
+            ? `${formatMoney(summary.largestContract.total_value)} signed by ${summary.largestContract.signing_team.abbreviation}.`
+            : "No contract rows yet."}
         </p>
       </article>
     </section>
@@ -241,18 +259,9 @@ function FilterControls({
       </div>
 
       <div className="filter-field">
-        <label htmlFor="era">Era</label>
-        <select defaultValue={searchParams.era ?? "all"} id="era" name="era">
-          <option value="all">All contracts</option>
-          <option value="current">Current only</option>
-          <option value="historical">Historical only</option>
-        </select>
-      </div>
-
-      <div className="filter-field">
         <label htmlFor="sort">Sort by</label>
         <select
-          defaultValue={searchParams.sort ?? "cap-desc"}
+          defaultValue={searchParams.sort ?? "aav-desc"}
           id="sort"
           name="sort"
         >
@@ -278,7 +287,7 @@ function FilterControls({
 }
 
 function SortChips({ searchParams }: { searchParams: SearchParams }) {
-  const activeSort = searchParams.sort ?? "cap-desc";
+  const activeSort = searchParams.sort ?? "aav-desc";
 
   return (
     <div className="chip-row">
@@ -318,23 +327,23 @@ function ContractsTable({
       <div className="split">
         <div className="stack">
           <span className="eyebrow">Contracts</span>
-          <h1>Contract analysis workspace</h1>
+          <h1>Contract warehouse workspace</h1>
         </div>
         <span className="label">{contracts.length} seeded contracts</span>
       </div>
 
       <p>
-        This first slice is local and intentionally small. It gives us a place
-        to inspect historical contracts and cap percentage normalization before
-        we add external ingestion.
+        This phase-1 slice stays focused on contract structure: full agreements,
+        year-by-year breakdowns, and stable player/team/season links. Cap
+        percentage normalization will come later on top of this base.
       </p>
 
       <PageContext
-        goal="Help evaluate whether a contract looks fair, expensive, or risky once cap context is normalized across eras."
+        goal="Expose clean contract warehouse tables so future risk, comp, and roster tooling has a trustworthy base to build on."
         questions={[
-          "How large is this contract relative to the cap environment?",
-          "Which deals stand out as market anchors or warning signs?",
-          "How does this player's contract compare to similar roster decisions?"
+          "What is the full contract and what are its year-by-year rows?",
+          "Which player, team, and season IDs does this agreement connect to?",
+          "Which contracts should be easiest to compare once modeling exists?"
         ]}
       />
 
@@ -346,29 +355,12 @@ function ContractsTable({
       <section className="subpanel stack">
         <div className="stack">
           <h2>Quick sorting</h2>
-          <p>
-            Use the chips for the most common sort pivots without reopening the
-            dropdown.
-          </p>
+          <p>Use the chips for the most common warehouse pivots.</p>
         </div>
         <SortChips searchParams={searchParams} />
       </section>
 
       <SummaryCards contracts={contracts} />
-
-      <section className="subpanel stack">
-        <div className="split">
-          <div className="stack">
-            <h2>What this slice proves</h2>
-            <p>
-              We now have a real end-to-end contracts surface: Prisma query,
-              seeded local data, and a UI that starts to frame contract values
-              as cap-share decisions instead of just dollar figures.
-            </p>
-          </div>
-          <span className="soft-label">Local-first workflow</span>
-        </div>
-      </section>
 
       <div className="table-wrap">
         <table>
@@ -377,10 +369,10 @@ function ContractsTable({
               <th>Player</th>
               <th>Team</th>
               <th>Term</th>
-              <th>Cap Hit</th>
-              <th>Cap %</th>
-              <th>Normalized Season</th>
-              <th>Source</th>
+              <th>Total Value</th>
+              <th>AAV</th>
+              <th>Start Season</th>
+              <th>Contract Years</th>
               <th>View</th>
             </tr>
           </thead>
@@ -394,7 +386,7 @@ function ContractsTable({
                         className="table-link"
                         href={`/contracts/${contract.id}`}
                       >
-                        {contract.player.fullName}
+                        {contract.player.full_name}
                       </Link>
                     </strong>
                     <span className="caption">
@@ -404,26 +396,15 @@ function ContractsTable({
                 </td>
                 <td>
                   <div className="cell-title">
-                    <strong>{contract.team.abbreviation}</strong>
-                    <span className="caption">{contract.team.name}</span>
+                    <strong>{contract.signing_team.abbreviation}</strong>
+                    <span className="caption">{contract.signing_team.name}</span>
                   </div>
                 </td>
-                <td>
-                  {contract.startSeason}-{contract.endSeason}
-                </td>
-                <td>{formatMoney(contract.capHitUsd)}</td>
-                <td>{formatPercent(contract.capPercentage)}</td>
-                <td>{contract.normalizedSeason ?? "Not normalized yet"}</td>
-                <td>
-                  <div className="cell-title">
-                    <strong>
-                      {contract.isHistorical ? "Historical" : "Current"}
-                    </strong>
-                    <span className="caption">
-                      {contract.sourceLabel ?? "Local seed"}
-                    </span>
-                  </div>
-                </td>
+                <td>{contract.term_years} years</td>
+                <td>{formatMoney(contract.total_value)}</td>
+                <td>{formatMoney(contract.average_annual_value)}</td>
+                <td>{contract.start_season.season_code}</td>
+                <td>{contract.contract_years.length}</td>
                 <td>
                   <Link
                     className="button-secondary inline-button"
@@ -451,7 +432,7 @@ function NoResultsState({
   return (
     <main className="panel stack">
       <span className="eyebrow">Contracts</span>
-      <h1>Contract analysis workspace</h1>
+      <h1>Contract warehouse workspace</h1>
       <p>No contracts matched the current filters.</p>
       <FilterControls
         searchParams={searchParams}
@@ -468,15 +449,15 @@ function EmptyState() {
   return (
     <main className="panel stack">
       <span className="eyebrow">Contracts</span>
-      <h1>Contract analysis workspace</h1>
+      <h1>Contract warehouse workspace</h1>
       <p>
         The contracts table is wired up, but there is no seeded data yet in
         your local database.
       </p>
       <ol className="muted-list">
-        <li>Start Postgres with `pnpm db:start`.</li>
-        <li>Apply the schema with `pnpm db:push`.</li>
-        <li>Seed sample contracts with `pnpm db:seed`.</li>
+        <li>Start Postgres with `npm run db:start`.</li>
+        <li>Apply the migration with `npm run db:migrate`.</li>
+        <li>Seed sample contracts with `npm run db:seed`.</li>
       </ol>
     </main>
   );
@@ -487,7 +468,7 @@ function ErrorState({ message }: { message: string }) {
     <main className="stack">
       <section className="panel stack">
         <span className="eyebrow">Contracts</span>
-        <h1>Contract analysis workspace</h1>
+        <h1>Contract warehouse workspace</h1>
         <p>
           The page is connected to Prisma, but the database is not available to
           query yet.
@@ -498,9 +479,9 @@ function ErrorState({ message }: { message: string }) {
         <strong>Database connection note</strong>
         <p>{message}</p>
         <ol className="muted-list">
-          <li>Start Postgres with `pnpm db:start`.</li>
+          <li>Start Postgres with `npm run db:start`.</li>
           <li>Copy `.env.example` to `.env` if needed.</li>
-          <li>Run `pnpm db:push` and then `pnpm db:seed`.</li>
+          <li>Run `npm run db:migrate` and then `npm run db:seed`.</li>
         </ol>
       </section>
     </main>

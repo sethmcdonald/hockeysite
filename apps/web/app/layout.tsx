@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 
 const links = [
   { href: "/", label: "Home" },
+  { href: "/raw-imports", label: "Raw Imports" },
   { href: "/players", label: "Players" },
   { href: "/teams", label: "Teams" },
   { href: "/contracts", label: "Contracts" },

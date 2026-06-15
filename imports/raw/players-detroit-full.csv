@@ -1,0 +1,27 @@
+source_record_id,external_nhl_id,full_name,birth_date,position_raw,shoots_catches_raw,source_updated_at
+det-full-larkin,,Dylan Larkin,,C,L,2026-06-15T00:00:00.000Z
+det-full-raymond,,Lucas Raymond,,RW,R,2026-06-15T00:00:00.000Z
+det-full-debrincat,,Alex DeBrincat,,"LW,RW",R,2026-06-15T00:00:00.000Z
+det-full-copp,,Andrew Copp,,"C,LW",L,2026-06-15T00:00:00.000Z
+det-full-compher,,J.T. Compher,,"C,RW",R,2026-06-15T00:00:00.000Z
+det-full-rasmussen,,Michael Rasmussen,,C,L,2026-06-15T00:00:00.000Z
+det-full-appleton,,Mason Appleton,,RW,R,2026-06-15T00:00:00.000Z
+det-full-brandsegg-nygard,,Michael Brandsegg-Nygard,,"RW,LW",R,2026-06-15T00:00:00.000Z
+det-full-finnie,,Emmitt Finnie,,"C,LW",L,2026-06-15T00:00:00.000Z
+det-full-kasper,,Marco Kasper,,C,L,2026-06-15T00:00:00.000Z
+det-full-dries,,Sheldon Dries,,"C,W",L,2026-06-15T00:00:00.000Z
+det-full-shine,,Dominik Shine,,"C,RW",R,2026-06-15T00:00:00.000Z
+det-full-kane,,Patrick Kane,,RW,L,2026-06-15T00:00:00.000Z
+det-full-perron,,David Perron,,"LW,RW",R,2026-06-15T00:00:00.000Z
+det-full-van-riemsdyk,,James van Riemsdyk,,LW,L,2026-06-15T00:00:00.000Z
+det-full-mazur,,Carter Mazur,,LW,R,2026-06-15T00:00:00.000Z
+det-full-seider,,Moritz Seider,,RD,R,2026-06-15T00:00:00.000Z
+det-full-faulk,,Justin Faulk,,RD,R,2026-06-15T00:00:00.000Z
+det-full-chiarot,,Ben Chiarot,,LD,L,2026-06-15T00:00:00.000Z
+det-full-bernard-docker,,Jacob Bernard-Docker,,RD,R,2026-06-15T00:00:00.000Z
+det-full-johansson,,Albert Johansson,,"LD,RD",L,2026-06-15T00:00:00.000Z
+det-full-sandin-pellikka,,Axel Sandin Pellikka,,RD,R,2026-06-15T00:00:00.000Z
+det-full-hamonic,,Travis Hamonic,,RD,R,2026-06-15T00:00:00.000Z
+det-full-edvinsson,,Simon Edvinsson,,LD,L,2026-06-15T00:00:00.000Z
+det-full-gibson,,John Gibson,,G,L,2026-06-15T00:00:00.000Z
+det-full-talbot,,Cam Talbot,,G,L,2026-06-15T00:00:00.000Z

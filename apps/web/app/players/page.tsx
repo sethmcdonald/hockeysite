@@ -12,40 +12,59 @@ type SearchParams = {
 
 type PlayerRow = {
   id: string;
-  fullName: string;
-  slug: string;
+  full_name: string;
   position: string | null;
-  shoots: string | null;
-  currentTeam: {
-    name: string;
-    abbreviation: string;
-  } | null;
-  contracts: { id: string; isHistorical: boolean }[];
-  anchorScenarios: { id: string }[];
+  shoots_catches: string | null;
+  roster_snapshots: {
+    snapshot_date: Date;
+    team: {
+      name: string;
+      abbreviation: string;
+    };
+  }[];
+  contracts: {
+    id: string;
+  }[];
+  player_seasons: {
+    id: string;
+  }[];
+  player_features: {
+    id: string;
+  }[];
 };
 
 async function getPlayers() {
   return prisma.player.findMany({
-    orderBy: [{ fullName: "asc" }],
+    orderBy: [{ full_name: "asc" }],
     select: {
       id: true,
-      fullName: true,
-      slug: true,
+      full_name: true,
       position: true,
-      shoots: true,
-      currentTeam: {
+      shoots_catches: true,
+      roster_snapshots: {
+        orderBy: [{ snapshot_date: "desc" }],
+        take: 1,
         select: {
-          name: true,
-          abbreviation: true
+          snapshot_date: true,
+          team: {
+            select: {
+              name: true,
+              abbreviation: true
+            }
+          }
         }
       },
       contracts: {
         select: {
-          id: true,
-          isHistorical: true
+          id: true
         }
       },
-      anchorScenarios: {
+      player_seasons: {
+        select: {
+          id: true
+        }
+      },
+      player_features: {
         select: {
           id: true
         }
@@ -54,25 +73,30 @@ async function getPlayers() {
   });
 }
 
+function getCurrentTeam(player: PlayerRow) {
+  return player.roster_snapshots[0]?.team ?? null;
+}
+
 function applyFilters(players: PlayerRow[], searchParams: SearchParams) {
   const query = searchParams.q?.trim().toLowerCase() ?? "";
   const position = searchParams.position ?? "all";
   const team = searchParams.team ?? "all";
 
   return players.filter((player) => {
+    const currentTeam = getCurrentTeam(player);
     const matchesQuery =
       query.length === 0 ||
-      player.fullName.toLowerCase().includes(query) ||
-      player.currentTeam?.name.toLowerCase().includes(query) ||
-      player.currentTeam?.abbreviation.toLowerCase().includes(query);
+      player.full_name.toLowerCase().includes(query) ||
+      currentTeam?.name.toLowerCase().includes(query) ||
+      currentTeam?.abbreviation.toLowerCase().includes(query);
 
     const matchesPosition =
       position === "all" || (player.position ?? "unknown") === position;
 
     const matchesTeam =
       team === "all" ||
-      player.currentTeam?.abbreviation === team ||
-      player.currentTeam?.name === team;
+      currentTeam?.abbreviation === team ||
+      currentTeam?.name === team;
 
     return matchesQuery && matchesPosition && matchesTeam;
   });
@@ -82,11 +106,9 @@ function getTeams(players: PlayerRow[]) {
   return Array.from(
     new Map(
       players
-        .filter((player) => player.currentTeam)
-        .map((player) => [
-          player.currentTeam!.abbreviation,
-          player.currentTeam!.name
-        ])
+        .map((player) => getCurrentTeam(player))
+        .filter((team): team is NonNullable<ReturnType<typeof getCurrentTeam>> => team !== null)
+        .map((team) => [team.abbreviation, team.name])
     ).entries()
   );
 }
@@ -168,12 +190,12 @@ function EmptyState() {
   return (
     <main className="panel stack">
       <span className="eyebrow">Players</span>
-      <h1>Player intelligence workspace</h1>
+      <h1>Player warehouse surface</h1>
       <p>The player surface is wired up, but there are no local player rows yet.</p>
       <ol className="muted-list">
         <li>Keep Postgres running.</li>
-        <li>Run `pnpm db:push`.</li>
-        <li>Run `pnpm db:seed` to load the sample roster.</li>
+        <li>Run `npm run db:migrate`.</li>
+        <li>Run `npm run db:seed` to load the sample roster.</li>
       </ol>
     </main>
   );
@@ -189,7 +211,7 @@ function NoResultsState({
   return (
     <main className="panel stack">
       <span className="eyebrow">Players</span>
-      <h1>Player intelligence workspace</h1>
+      <h1>Player warehouse surface</h1>
       <p>No players matched the current filters.</p>
       <PlayerFilters players={players} searchParams={searchParams} />
       <a className="button-secondary inline-button" href="/players">
@@ -204,7 +226,7 @@ function ErrorState({ message }: { message: string }) {
     <main className="stack">
       <section className="panel stack">
         <span className="eyebrow">Players</span>
-        <h1>Player intelligence workspace</h1>
+        <h1>Player warehouse surface</h1>
         <p>
           The player surface is connected, but the database is not reachable
           right now.
@@ -223,46 +245,41 @@ function PlayerGrid({ players }: { players: PlayerRow[] }) {
   return (
     <section className="detail-grid">
       {players.map((player) => {
-        const currentContracts = player.contracts.filter(
-          (contract) => !contract.isHistorical
-        ).length;
-        const historicalContracts = player.contracts.filter(
-          (contract) => contract.isHistorical
-        ).length;
+        const currentTeam = getCurrentTeam(player);
 
         return (
           <article key={player.id} className="panel stack">
             <div className="split">
               <div className="stack">
                 <span className="eyebrow">Player</span>
-                <h2>{player.fullName}</h2>
+                <h2>{player.full_name}</h2>
               </div>
               <span className="soft-label">
-                {player.currentTeam?.abbreviation ?? "FA"}
+                {currentTeam?.abbreviation ?? "Unassigned"}
               </span>
             </div>
 
             <p>
-              {player.currentTeam
-                ? `${player.currentTeam.name} | ${player.position ?? "Position TBD"} | Shoots ${player.shoots ?? "TBD"}`
-                : `No team assigned | ${player.position ?? "Position TBD"} | Shoots ${player.shoots ?? "TBD"}`}
+              {currentTeam
+                ? `${currentTeam.name} | ${player.position ?? "Position TBD"} | Shoots/Catches ${player.shoots_catches ?? "TBD"}`
+                : `No roster snapshot yet | ${player.position ?? "Position TBD"} | Shoots/Catches ${player.shoots_catches ?? "TBD"}`}
             </p>
 
             <div className="stats-grid">
               <article className="stat-card">
-                <span className="stat-label">Current Contracts</span>
-                <strong className="stat-value">{currentContracts}</strong>
-                <p>Active seeded contract records tied to this player.</p>
+                <span className="stat-label">Contracts</span>
+                <strong className="stat-value">{player.contracts.length}</strong>
+                <p>Full contract rows tied to this player.</p>
               </article>
               <article className="stat-card">
-                <span className="stat-label">Historical Contracts</span>
-                <strong className="stat-value">{historicalContracts}</strong>
-                <p>Historical comparables already connected locally.</p>
+                <span className="stat-label">Player Seasons</span>
+                <strong className="stat-value">{player.player_seasons.length}</strong>
+                <p>Normalized player/team/season rows in the warehouse.</p>
               </article>
               <article className="stat-card">
-                <span className="stat-label">Anchor Scenarios</span>
-                <strong className="stat-value">{player.anchorScenarios.length}</strong>
-                <p>Scenario entries where this player acts as an anchor.</p>
+                <span className="stat-label">Feature Rows</span>
+                <strong className="stat-value">{player.player_features.length}</strong>
+                <p>Future-ready internal features, without modeling logic yet.</p>
               </article>
             </div>
 
@@ -270,11 +287,8 @@ function PlayerGrid({ players }: { players: PlayerRow[] }) {
               <Link className="button-secondary inline-button" href="/contracts">
                 View contracts
               </Link>
-              <Link
-                className="button-secondary inline-button"
-                href="/anchors-away"
-              >
-                View anchors
+              <Link className="button-secondary inline-button" href="/teams">
+                View teams
               </Link>
             </div>
           </article>
@@ -310,23 +324,23 @@ export default async function PlayersPage({
           <div className="split">
             <div className="stack">
               <span className="eyebrow">Players</span>
-              <h1>Player intelligence workspace</h1>
+              <h1>Player warehouse surface</h1>
             </div>
             <span className="label">{filteredPlayers.length} visible players</span>
           </div>
 
           <p>
-            This slice brings the roster into the product properly: searchable
-            players, team and position filtering, and direct links back into
-            contract and anchor context.
+            This phase-1 view keeps players grounded in warehouse primitives:
+            canonical identities, roster snapshots, contracts, and season-level
+            records.
           </p>
 
           <PageContext
-            goal="Give a quick player-level entry point into contract, roster, and anchor analysis."
+            goal="Give a quick player-level entry point into the warehouse foundation without implying SAUCE or ANCHOR logic already exists."
             questions={[
-              "Who is this player in the current roster landscape?",
-              "How much contract and anchor context do we already have for them?",
-              "Which players should we inspect more deeply for decision-making?"
+              "Which player identities and historical season rows do we already have?",
+              "How many contract and feature records are attached to a player?",
+              "Which player should we inspect next in the contract warehouse?"
             ]}
           />
 

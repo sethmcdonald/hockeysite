@@ -1,0 +1,4 @@
+source_record_id,external_nhl_id,full_name,birth_date,position_raw,shoots_catches_raw,source_updated_at
+det-player-larkin,,Dylan Larkin,1996-07-30,C,L,2026-06-15T00:00:00.000Z
+det-player-raymond,,Lucas Raymond,2002-03-28,RW,R,2026-06-15T00:00:00.000Z
+det-player-seider,,Moritz Seider,2001-04-06,D,R,2026-06-15T00:00:00.000Z

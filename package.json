@@ -1,19 +1,22 @@
 {
   "name": "hockey-decision-intelligence-platform",
   "private": true,
-  "packageManager": "pnpm@9.0.0",
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build",
-    "lint": "pnpm --filter web lint",
-    "typecheck": "pnpm --filter web typecheck",
+    "dev": "node scripts/run-app-with-root-env.js npm --prefix apps/web run dev",
+    "build": "node scripts/run-app-with-root-env.js npm --prefix apps/web run build",
+    "lint": "node scripts/run-app-with-root-env.js npm --prefix apps/web run lint",
+    "typecheck": "node scripts/run-app-with-root-env.js npm --prefix apps/web run typecheck",
     "db:start": "docker compose up -d postgres",
     "db:stop": "docker compose down",
-    "db:generate": "pnpm --filter @hockey/db db:generate",
-    "db:push": "pnpm --filter @hockey/db db:push",
-    "db:migrate": "pnpm --filter @hockey/db db:migrate",
-    "db:seed": "pnpm --filter @hockey/db db:seed",
-    "db:studio": "pnpm --filter @hockey/db db:studio"
+    "db:generate": "npm --prefix packages/db run db:generate",
+    "db:push": "npm --prefix packages/db run db:push",
+    "db:migrate": "npm --prefix packages/db run db:migrate",
+    "db:seed": "npm --prefix packages/db run db:seed",
+    "db:validate": "npm --prefix packages/db run db:validate",
+    "db:studio": "npm --prefix packages/db run db:studio",
+    "import:raw:players": "npm --prefix packages/db run import:raw:players --",
+    "import:raw:teams": "npm --prefix packages/db run import:raw:teams --",
+    "normalize:detroit": "npm --prefix packages/db run normalize:detroit"
   }
 }
 

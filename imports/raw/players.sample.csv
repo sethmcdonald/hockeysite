@@ -1,0 +1,4 @@
+source_record_id,external_nhl_id,full_name,birth_date,position_raw,shoots_catches_raw,source_updated_at
+local-player-crosby,8471675,Sidney Crosby,1987-08-07,C,L,2026-06-15T00:00:00.000Z
+local-player-mcdavid,8478402,Connor McDavid,1997-01-13,C,L,2026-06-15T00:00:00.000Z
+local-player-fox,8479323,Adam Fox,1998-02-17,D,R,2026-06-15T00:00:00.000Z

@@ -25,6 +25,10 @@ export default function HomePage() {
 
       <section className="grid">
         <article className="panel">
+          <h2>Raw Imports</h2>
+          <p>Review staged local source batches before anything is normalized into warehouse tables.</p>
+        </article>
+        <article className="panel">
           <h2>SAUCE</h2>
           <p>Structured insight surfaces will live here once trusted inputs are defined.</p>
         </article>

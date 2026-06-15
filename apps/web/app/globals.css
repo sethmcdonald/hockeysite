@@ -385,6 +385,21 @@ tbody tr:last-child td {
   line-height: 1.6;
 }
 
+.payload-block {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #101828;
+  color: #f8fafc;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 720px) {
   .filter-field-wide {
     grid-column: span 1;

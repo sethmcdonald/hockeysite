@@ -5,21 +5,24 @@
   "types": "src/index.ts",
   "prisma": {
     "schema": "prisma/schema.prisma",
-    "seed": "dotenv -e ../../.env -- node prisma/seed.js"
+    "seed": "node scripts/run-node-with-env.js prisma/seed.js"
   },
   "scripts": {
-    "db:generate": "dotenv -e ../../.env -- prisma generate",
-    "db:push": "dotenv -e ../../.env -- prisma db push",
-    "db:migrate": "dotenv -e ../../.env -- prisma migrate dev",
-    "db:seed": "prisma db seed",
-    "db:studio": "dotenv -e ../../.env -- prisma studio"
+    "db:generate": "node scripts/generate-client.js",
+    "db:push": "node scripts/run-prisma.js db push --schema prisma/schema.prisma",
+    "db:migrate": "node scripts/run-prisma.js migrate dev --skip-generate --schema prisma/schema.prisma",
+    "db:seed": "node scripts/run-node-with-env.js prisma/seed.js",
+    "db:validate": "node scripts/run-node-with-env.js prisma/validate.js",
+    "db:studio": "node scripts/run-prisma.js studio --schema prisma/schema.prisma",
+    "import:raw:players": "node scripts/run-node-with-env.js scripts/import-raw-players.js",
+    "import:raw:teams": "node scripts/run-node-with-env.js scripts/import-raw-teams.js",
+    "normalize:detroit": "node scripts/run-node-with-env.js scripts/normalize-detroit.js"
   },
   "dependencies": {
-    "@prisma/client": "^5.17.0"
+    "@prisma/client": "^5.22.0"
   },
   "devDependencies": {
-    "dotenv-cli": "^7.4.2",
-    "prisma": "^5.17.0",
+    "prisma": "^5.22.0",
     "typescript": "^5.0.0"
   }
 }
